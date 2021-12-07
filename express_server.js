@@ -1,3 +1,14 @@
+function generateRandomString() {
+  var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < characters.length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result.slice(0, 6);
+}
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -39,9 +50,18 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Okay");
+ const shortUrl = generateRandomString() 
+ const longUrl = req.body.longURL
+ urlDatabase[shortUrl] = longUrl
+  console.log(urlDatabase);
+  res.redirect(`/urls/${shortUrl}`);
 });
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
