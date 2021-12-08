@@ -27,7 +27,7 @@
         <form class="form-inline m-2" action="/urls/<%= shortURL %>" method="post">
           <div class="form-group mx-auto">
             <label class="m-2" for="longURL">New URL: </label>
-            <input class="form-control m-2" type="text" name="longURL" value="http://">
+            <input class="form-control m-2" type="text" name="longURL" value= <%= longURL %>>
             <button class="btn btn-primary m-2" type="submit">Update</button>
           </div>
         </form>
