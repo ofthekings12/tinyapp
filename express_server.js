@@ -78,7 +78,7 @@ app.get("/urls/new", (req, res) => {
 //GET REQUEST TO VIEW PAGE WITH NEWLY CREATED URL
 app.get("/urls/:shortURL", (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
-    return res.status(403).send("🙅‍♂️Short URL doesnt exist!🙅‍♂️");
+    return res.status(403).send("🙅‍♂️Short URL doesn't exist!🙅‍♂️");
   }
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -188,7 +188,7 @@ app.post("/urls", (req, res) => {
 //POST REQUEST FOR NEWLY CREATED URLS
 app.post("/urls/:shortURL", (req, res) => {
   const userId = req.session["user_id"];
-/// some basic permission logic/error codes
+/// permission logic/error codes
   if (!userId) {
     res.status(403).send("😬You must be logged in to edit urls...😬");
     return;
