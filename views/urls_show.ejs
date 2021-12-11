@@ -3,26 +3,26 @@
 <head>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-  <title>URL - TinyApp Example</title>
+  <title>Your NEW TinyURL 👨‍🍼</title>
 </head>
 
 <body>
   <%- include('partials/_header') %>
   <% if (!user) { %>
-    <h3><center>REGISTER to get started, or LOGIN to view your URLS!</center></h3>
+    <h3><center>✨REGISTER to get started, or LOGIN to view your URLS!✨</center></h3>
   <% } else { %>  
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+        <h5 class="card-title">TinyURL 🤏 for  <%= longURL %></h5>
+        <p class="card-text">Short URL 👉    <a href="<%= longURL %>"><%= shortURL %></a></p>
       </div>
     <div class="card-footer text-muted"></div>
-      <h3>Edit</h3>
+      <h3>Edit📝</h3>
       <form method="POST" action=/urls/<%= shortURL %>>
         <label for="newURL">New URL:</label>
         <input type="text" name="newURL" value="<%= longURL %>" style="width: 300px; margin: 1em"> 
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Submit✅</button>
       </form>
     </div>
   </div>

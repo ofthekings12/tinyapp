@@ -1,32 +1,13 @@
+const bcrypt = require("bcryptjs");
 
-function generateRandomString() {
-  var result = "";
-  var characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  var charactersLength = characters.length;
-  for (var i = 0; i < characters.length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result.slice(0, 6);
-}
-
-function urlsForUser(id) {
-  const usersUrls = {};
-  for (let url in urlDatabase) {
-    if (id === urlDatabase[url].userID) {
-      usersUrls[url] = urlDatabase[url];
-    }
-  }
-
-  return usersUrls;
-}
-
+const helpers = require("./helpers");
+const { getUserByEmail, generateRandomString, urlsForUser } = helpers;
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+const cookieSession = require("cookie-session");
+app.use(cookieSession({ keys: ["password"] }));
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -51,6 +32,7 @@ const usersDatabase = {
   },
 };
 
+// GET REQUESTS THAT HAVE NO REAL FUNCTION/PURPOSE BUT COMPASS TOLD US TO
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -59,169 +41,181 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-/*----------------
-GET REQUESTS
----------------*/
-
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
 
-  let usersUrls = urlsForUser(req.cookies["user_id"]);
+/*----------------
+GET REQUESTS
+---------------*/
+
+//GET REQUEST TO VIEW URL HOME PAGE
+app.get("/urls", (req, res) => {
+  const userId = req.session.user_id;
+// users can only view their own created urls
+  let usersUrls = urlsForUser(req.session["user_id"], urlDatabase);
 
   const templateVars = {
     urls: usersUrls,
-    user: usersDatabase[req.cookies["user_id"]],
+    user: usersDatabase[req.session["user_id"]],
   };
 
   res.render("urls_index", templateVars);
 });
 
+//GET REQUEST TO VIEW "CREATE NEW URL PAGE"
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: usersDatabase[req.cookies["user_id"]] };
-  if (!req.cookies["user_id"]) {
+  const templateVars = { user: usersDatabase[req.session["user_id"]] };
+  // only registered/logged in users can create a new url
+  if (!req.session["user_id"]) {
     res.redirect(403, "/login");
   } else {
     res.render("urls_new", templateVars);
   }
 });
 
+//GET REQUEST TO VIEW PAGE WITH NEWLY CREATED URL
 app.get("/urls/:shortURL", (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
-    return res.status(403).send("Short URL doesnt exist!");
+    return res.status(403).send("🙅‍♂️Short URL doesnt exist!🙅‍♂️");
   }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: usersDatabase[req.cookies["user_id"]],
+    user: usersDatabase[req.session["user_id"]],
   };
   res.render("urls_show", templateVars);
 });
 
+// GET REQUEST FOR WHEN SHORT URL IS CREATED FROM CREATE PAGE
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
+// GET REQUEST TO VIEW REGISTRATION PAGE
 app.get("/register", (req, res) => {
-  const templateVars = { user: usersDatabase[req.cookies["user_id"]] };
+  const templateVars = { user: usersDatabase[req.session["user_id"]] };
+
   res.render("urls_register", templateVars);
 });
 
+// GET REQUEST TO VIEW LOGIN PAGE
 app.get("/login", (req, res) => {
-  const templateVars = { user: usersDatabase[req.cookies["user_id"]] };
+  const templateVars = { user: usersDatabase[req.session["user_id"]] };
   res.render("urls_login", templateVars);
 });
 
 //POST REQUESTS
 
+/////REGISTER POST REQUEST
 app.post("/register", (req, res) => {
   //extract user info
   const email = req.body.email;
   const password = req.body.password;
-
+  const encryptedPassword = bcrypt.hashSync(password);
+  // register form logic/error messages
   if (email === "" || password === "") {
-    res.status(400).send("Bad Request!");
+    res.status(400).send("🤮Bad Request!🤮");
     return;
   }
-
   for (let user in usersDatabase) {
     if (email === usersDatabase[user].email) {
       res
         .status(400)
-        .send("Email already registered. Try another email address!");
+        .send("🙅‍♂️Email already registered. Try another email address!🙅‍♂️");
       return;
     }
   }
-
   //create a new user ID
   const userId = Math.random().toString(36).substr(2, 8);
-
   const newUser = {
     id: userId,
     email: email,
-    password: password,
+    password: encryptedPassword,
   };
-
   //add user to db
   usersDatabase[userId] = newUser;
-
+  req.session["user_id"] = userId;
   // set a cookie
   res.cookie("user_id", userId);
-
   //redirect to /urls
   res.redirect("/urls");
 });
 
+////LOGIN POST REQUEST
 app.post("/login", (req, res) => {
+  //extract user info
   const email = req.body.email;
   const password = req.body.password;
 
-  for (let user in usersDatabase) {
-    if (
-      email === usersDatabase[user].email &&
-      password !== usersDatabase[user].password
-    ) {
-      res.status(403).send("Incorrect password");
-      return;
-    }
-    if (
-      email === usersDatabase[user].email &&
-      password === usersDatabase[user].password
-    ) {
-      res.cookie("user_id", usersDatabase[user].id);
-      res.redirect("/urls");
-      return;
+  //password encryption and login form logic
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  if (req.body.email === "" || req.body.password === "") {
+    return res.status(400).send("🤷🏽‍♂️Cannot leave fields empty🤷🏽‍♂️");
+  }
+  let user = getUserByEmail(email, usersDatabase);
+
+  if (!user) {
+    return res.status(403).send("🧐User Not Found🧐");
+  }
+  if (user) {
+    if (!bcrypt.compareSync(password, user.password)) {
+      return res.status(403).send("🤨Email or Password does not match records🤨");
     }
   }
-  return res.status(403).send("Email not registered");
+  req.session.user_id = user.id;
+  res.redirect(`/urls`);
 });
 
+///LOGOUT POST REQUEST
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  ///upon logout delete cookies and redirect to home page
+  req.session = null;
   res.redirect("/urls");
 });
 
+/// POST REQUEST FOR WHEN NEW SHORTURL IS CREATED AND USER's URL DATABASE UPDATES TO SHOW NEW URL
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
   const longUrl = req.body.longURL;
-  const userID = req.cookies["user_id"];
+  const userID = req.session["user_id"];
   urlDatabase[shortUrl] = { longURL: longUrl, userID };
   res.redirect(`/urls/${shortUrl}`);
 });
 
+//POST REQUEST FOR NEWLY CREATED URLS
 app.post("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies["user_id"];
-
+  const userId = req.session["user_id"];
+/// some basic permission logic/error codes
   if (!userId) {
-    res.status(403).send("You must be logged in to edit urls...");
+    res.status(403).send("😬You must be logged in to edit urls...😬");
     return;
   } else {
     if (urlDatabase[req.params.shortURL].userID !== userId) {
-      res.status(403).send("Users can only edit their own urls.");
+      res.status(403).send("👀Users can only edit their own urls.👀");
       return;
     }
-
+    ///DISPLAYS NEWLY CREATED SHORTURL BY USER
     shortURL = req.params.shortURL;
     longUrl = req.body.newURL;
-    const userID = req.cookies["user_id"];
+    const userID = req.session["user_id"];
     urlDatabase[shortURL] = { longURL: longUrl, userID };
     res.redirect(`/urls/`);
   }
 });
 
+// POST REQUEST TO DELETE URLS
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userId = req.cookies["user_id"];
-
+  const userId = req.session["user_id"];
+/// more permission logic/error codes
   if (!userId) {
-    res.status(403).send("You must be logged in to delete urls...");
+    res.status(403).send("😤You must be logged in to delete urls...😤");
     return;
   } else {
     if (urlDatabase[req.params.shortURL].userID !== userId) {
-      res.status(403).send("Users can only delete their own urls.");
+      res.status(403).send("😮‍💨Users can only delete their own urls.😮‍💨");
       return;
     }
     const shortUrl = req.params.shortURL;
@@ -230,14 +224,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+//POST REQUEST FOR NON-EXISTANT/INVALID SHORTURL
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longUrl;
+  //error code logic
   if (!longURL) {
-    return res.status(403).send("Short URL doesnt exist!");
+    return res.status(403).send("😧Short URL doesnt exist!😧");
   }
   res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT }!`);
+  console.log(`Example app listening on port ${PORT}!`);
 });

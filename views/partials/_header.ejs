@@ -1,27 +1,28 @@
 <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-primary">
-    <a class="navbar-brand" href="/urls">TinyApp</a>
+  <nav class="navbar navbar-expand-md navbar-dark bg-primary" style="background: -webkit-linear-gradient(left, #cc1717, #007bff); animation: gradient-animation 4s ease infinite; -webkit-text-fill-color: darkblue;">
+    <a class="navbar-brand" href="/urls">TinyApp✨</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <a class="nav-item nav-link" href="/urls">My URLs🤓</a>
+        <a class="nav-item nav-link" href="/urls/new">Create New URL😏</a>
         
        
       </div>
     </div>
+    <!-- DISPLAY USER EMAIL WHEN LOGGIN IN -->
     <% if (!user) { %>
       <div>
-        <a class="btn btn-primary" href="/login">Login</a>
-        <a class="btn btn-primary" href="/register">Register</a>
+        <a class="btn btn-primary" href="/login">Login 📥</a>
+        <a class="btn btn-primary" href="/register">Register ✍️</a>
       </div>
     <% } else { %>
     <form class="form-inline my-1" action="/logout" method="POST">
       <div>
-        Logged in as: <%= user.email %>
-        <button type="submit" class="btn btn-outline-dark ml-3">Logout</button>
+        🔱 Logged In As: <%= user.email %> 🔱
+        <button type="submit" class="btn btn-outline-dark ml-3">Logout👋</button>
       </div>
     </form>
     <% } %>
