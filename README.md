@@ -16,6 +16,8 @@ Long URLS taking up too many characters in your Tweets? FEAR NOT - TinyApp us he
 Register today and keep track of all your shortened URLs for all your tweeting needs.
 !["TinyApp register page"](https://github.com/ofthekings12/tinyapp/blob/master/docs/urls-register.png?raw=true)
 
+TinyApp is EASY to use, fast, AND effective! Get a new shortened URL within seconds!
+!["TinyApp Create URL Page"](https://github.com/ofthekings12/tinyapp/blob/master/docs/urls-create.png?raw=true)
 
 Long, cumbersome, URLS are a thing of the past with TinyApp!
 ![""](https://github.com/ofthekings12/tinyapp/blob/master/docs/url-new.png?raw=true)
