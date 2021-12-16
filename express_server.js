@@ -77,13 +77,20 @@ app.get("/urls/new", (req, res) => {
 
 //GET REQUEST TO VIEW PAGE WITH NEWLY CREATED URL
 app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.session["user_id"];
+
   if (!urlDatabase[req.params.shortURL]) {
     return res.status(403).send("🙅‍♂️Short URL doesn't exist!🙅‍♂️");
+  }
+  if (urlDatabase[req.params.shortURL].userID !== userId) {
+    res.status(403).send("👀Users can only view their own urls.👀");
+    return;
   }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: usersDatabase[req.session["user_id"]],
+
   };
   res.render("urls_show", templateVars);
 });
@@ -226,7 +233,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //POST REQUEST FOR NON-EXISTANT/INVALID SHORTURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longUrl;
+  const shortURL = req.params.shortURL
+  const urlObject = urlDatabase[shortURL]
+  if (!urlObject) {
+    return res.status(403).send("😧Short URL doesnt exist!😧");
+  } 
+  const longURL = urlObject.longUrl;
   //error code logic
   if (!longURL) {
     return res.status(403).send("😧Short URL doesnt exist!😧");
