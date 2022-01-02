@@ -33,9 +33,6 @@ const usersDatabase = {
 };
 
 // GET REQUESTS THAT HAVE NO REAL FUNCTION/PURPOSE BUT COMPASS TOLD US TO
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -49,6 +46,20 @@ app.get("/hello", (req, res) => {
 /*----------------
 GET REQUESTS
 ---------------*/
+app.get("/", (req, res) => {
+  const userId = req.session.user_id;
+  let usersUrls = urlsForUser(req.session["user_id"], urlDatabase);
+    const templateVars = {
+    urls: usersUrls,
+    user: usersDatabase[req.session["user_id"]],
+  };
+
+  if (!req.session["user_id"]) {
+    res.render("urls_login", templateVars);;
+  } else {
+    res.render("urls_index", templateVars);
+  }
+});
 
 //GET REQUEST TO VIEW URL HOME PAGE
 app.get("/urls", (req, res) => {
@@ -124,7 +135,7 @@ app.post("/register", (req, res) => {
   const encryptedPassword = bcrypt.hashSync(password);
   // register form logic/error messages
   if (email === "" || password === "") {
-    res.status(400).send("🤮Bad Request!🤮");
+    res.status(400).send("🤮Bad Request! You cannot leave email or password fields blank! 🤮");
     return;
   }
   for (let user in usersDatabase) {
@@ -180,7 +191,7 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   ///upon logout delete cookies and redirect to home page
   req.session = null;
-  res.redirect("/urls");
+  res.redirect("/");
 });
 
 /// POST REQUEST FOR WHEN NEW SHORTURL IS CREATED AND USER's URL DATABASE UPDATES TO SHOW NEW URL
@@ -233,17 +244,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //POST REQUEST FOR NON-EXISTANT/INVALID SHORTURL
 app.get("/u/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL
-  const urlObject = urlDatabase[shortURL]
-  if (!urlObject) {
-    return res.status(403).send("😧Short URL doesnt exist!😧");
-  } 
-  const longURL = urlObject.longUrl;
-  //error code logic
-  if (!longURL) {
-    return res.status(403).send("😧Short URL doesnt exist!😧");
+  let shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    res.redirect(urlDatabase[shortURL].longURL);
+  } else {
+    res.status(404).send("This URL does not exist");
   }
-  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
